@@ -586,7 +586,6 @@
 		"tenantId": "[subscription().tenantId]",
 		"bastionVMSize": "Standard_DS1_v2",
 		"masterLoadBalancerName": "[concat('MasterLb',resourceGroup().name)]",
-		"masterPublicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', resourceGroup().name)]",
 		"masterLbId": "[resourceId('Microsoft.Network/loadBalancers', variables('masterLoadBalancerName'))]",
 		"masterLbFrontEndConfigId": "[concat(variables('masterLbId'), '/frontendIPConfigurations/loadBalancerFrontEnd')]",
 		"masterLbBackendPoolId": "[concat(variables('masterLbId'),'/backendAddressPools/loadBalancerBackend')]",
@@ -1222,21 +1221,6 @@
 			"properties": {}
 		},
 		{
-			"type": "Microsoft.Network/publicIPAddresses",
-			"name": "[resourceGroup().name]",
-			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionNetwork')]",
-			"tags": {
-				"displayName": "OpenShiftMasterPublicIP"
-			},
-			"properties": {
-				"publicIPAllocationMethod": "Static",
-				"dnsSettings": {
-					"domainNameLabel": "[resourceGroup().name]"
-				}
-			}
-		},
-		{
 			"type": "Microsoft.Network/loadBalancers",
 			"name": "[variables('masterLoadBalancerName')]",
 			"location": "[variables('location')]",
@@ -1245,15 +1229,17 @@
 				"displayName": "OpenShiftMasterLB"
 			},
 			"dependsOn": [
-				"[concat('Microsoft.Network/publicIPAddresses/', resourceGroup().name)]"
+				"[resourceId('Microsoft.Network/virtualNetworks/subnets', 'ccltest1', 'master')]"
 			],
 			"properties": {
 				"frontendIPConfigurations": [{
 					"name": "LoadBalancerFrontEnd",
 					"properties": {
-						"publicIPAddress": {
-							"id": "[variables('masterPublicIpAddressId')]"
-						}
+						"privateIPAddress": "10.88.145.110",
+                                                "privateIPAllocationMethod": "Static",
+                                                "subnet": {
+                                                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'ccltest1', 'master')]"
+                                                }
 					}
 				}],
 				"backendAddressPools": [{

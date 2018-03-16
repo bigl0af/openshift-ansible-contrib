@@ -592,7 +592,7 @@ openshift_portal_net=${PORTALNET}
 openshift_use_dnsmasq=true
 openshift_master_cluster_method=native
 openshift_master_default_subdomain=${WILDCARDFQDN}
-openshift_master_cluster_hostname=${PUBLICHOSTNAME}
+openshift_master_cluster_hostname=master1
 openshift_master_cluster_public_hostname=${PUBLICHOSTNAME}
 
 # Do not install metrics but post install
