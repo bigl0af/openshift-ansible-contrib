@@ -1229,7 +1229,7 @@
 				"displayName": "OpenShiftMasterLB"
 			},
 			"dependsOn": [
-				"[resourceId('Microsoft.Network/virtualNetworks/subnets', 'ccltest1', 'master')]"
+				"[variables('masterSubnetRef')]"
 			],
 			"properties": {
 				"frontendIPConfigurations": [{
@@ -1238,7 +1238,7 @@
 						"privateIPAddress": "10.88.145.110",
                                                 "privateIPAllocationMethod": "Static",
                                                 "subnet": {
-                                                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'ccltest1', 'master')]"
+                                                          "id": "[variables('masterSubnetRef')]"
                                                 }
 					}
 				}],
