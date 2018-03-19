@@ -63,6 +63,12 @@
 				"description": "URL for web console"
 			}
 		},
+		"masterPrivateIp": {
+			"type": "string",
+			"metadata": {
+				"description": "Internal IP address for web console"
+			}
+		},
 		"adminUsername": {
 			"type": "string",
 			"minLength": 1,
@@ -1233,7 +1239,7 @@
 				"frontendIPConfigurations": [{
 					"name": "LoadBalancerFrontEnd",
 					"properties": {
-						"privateIPAddress": "10.88.145.110",
+						"privateIPAddress": "[parameters('masterPrivateIp')]",
                                                 "privateIPAllocationMethod": "Static",
                                                 "subnet": {
                                                           "id": "[variables('masterSubnetRef')]"
@@ -1354,6 +1360,10 @@
 		}
 	],
 	"outputs": {
+		"Openshift Webconsole": {
+			"type": "string",
+			"value": "[concat('https://', parameters('masterUrl'), ':443/console')]"
+		},
 		"Bastion ssh": {
 			"type": "string",
 			"value": "[concat('ssh -A ', reference('bastion').outputs.fqdn.value)]"

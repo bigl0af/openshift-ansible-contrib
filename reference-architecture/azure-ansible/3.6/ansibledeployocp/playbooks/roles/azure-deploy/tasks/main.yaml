@@ -11,6 +11,8 @@
         value: "{{ fqdn }}"
       masterUrl:
         value: "{{ masterurl }}"
+      masterPrivateIp:
+        value: "{{ masterprivateip }}"
       adminUsername:
         value: "{{ adminusername }}"
       adminPassword:

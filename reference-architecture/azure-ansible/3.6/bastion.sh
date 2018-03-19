@@ -944,9 +944,29 @@ cat <<EOF > /home/${AUSERNAME}/postinstall.yml
   tasks:
   - name: Create Master Directory
     file: path=/etc/origin/master state=directory
+
   - name: add initial user to Red Hat OpenShift Container Platform
     shell: htpasswd -c -b /etc/origin/master/htpasswd ${AUSERNAME} ${PASSWORD}
 
+  - name: Set node config cluster server
+    lineinfile:
+      path: /etc/origin/node/system:node:{{ ansible_hostname }}.kubeconfig
+      regexp: "^    server: https://.*"
+      line: "    server: https://{{ ansible_hostname }}:443"
+      state: present
+    notify: Restart atomic-openshift-node
+
+  - name: Set client config cluster server
+    lineinfile:
+      path: /root/.kube/config
+      regexp: "^    server: https://.*"
+      line: "    server: https://{{ ansible_hostname }}"
+      state: present
+  handlers:
+  - name: Restart atomic-openshift-node
+    service:
+      name: atomic-openshift-node
+      state: restarted
 EOF
 
 cat > /home/${AUSERNAME}/ssovars.yml <<EOF
