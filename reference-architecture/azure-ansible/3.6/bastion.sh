@@ -511,7 +511,7 @@ openshift_disable_check=package_version
 openshift_enable_service_catalog=true
 ansible_service_broker_install=false
 template_service_broker_install=false
-template_service_broker_selector=role=infra
+template_service_broker_selector={'role': 'infra'}
 openshift_rolling_restart_mode=system
 
 #3.6 uses deployment_type
