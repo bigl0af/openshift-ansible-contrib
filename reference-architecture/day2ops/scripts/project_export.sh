@@ -56,6 +56,7 @@ rolebindings(){
 serviceaccounts(){
   echo "Exporting serviceaccounts to ${PROJECT}/serviceaccounts.json"
   oc get --export -o=json serviceaccounts -n ${PROJECT} | jq '.items[] |
+    select(.metadata.name as $n | ["builder","default","deployer"] | index($n) | not) |
     del(.metadata.uid,
         .metadata.selfLink,
         .metadata.resourceVersion,
@@ -138,15 +139,18 @@ is(){
 }
 
 rcs(){
-  echo "Exporting replicationcontrollers to ${PROJECT}/rcs.json"
-  oc get --export -o=json rc -n ${PROJECT} | jq '.items[] |
+  echo "Exporting replicationcontrollers to ${PROJECT}/rc_*.json"
+  RCS=$(oc get rc -n ${PROJECT} -o jsonpath="{.items[*].metadata.name}")
+  for rc in ${RCS}; do
+    oc get --export -o=json rc ${rc} -n ${PROJECT} | jq '
     del(.status,
         .metadata.uid,
         .metadata.selfLink,
         .metadata.resourceVersion,
         .metadata.creationTimestamp,
         .metadata.generation
-        )' > ${PROJECT}/rcs.json
+        )' > ${PROJECT}/rc_${rc}.json
+  done
 }
 
 svcs(){
@@ -430,7 +434,7 @@ imagestreamtags
 rcs
 svcs
 pods
-podpreset
+#podpreset
 cms
 egressnetworkpolicies
 rolebindingrestrictions
