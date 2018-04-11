@@ -11,6 +11,9 @@
 		"sa": {
 			"type": "string"
 		},
+                "bastionPrivateIp": {
+                        "type": "string"
+                },
 		"subnetRef": {
 			"type": "string"
 		},
@@ -162,10 +165,8 @@
 				"ipConfigurations": [{
 					"name": "ipconfig1",
 					"properties": {
-						"privateIPAllocationMethod": "Dynamic",
-						"publicIPAddress": {
-							"id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), 'pip'))]"
-						},
+						"privateIPAllocationMethod": "Static",
+						"privateIPAddress": "[parameters('bastionPrivateIp')]",
 						"subnet": {
 							"id": "[parameters('subnetRef')]"
 						}

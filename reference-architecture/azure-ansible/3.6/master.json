@@ -14,6 +14,9 @@
     "subnetRef" : {
       "type" : "string"
     },
+    "bastionPrivateIp": {
+      "type": "string"
+    },
     "vmSize" : {
       "type" : "string"
     },
@@ -214,6 +217,32 @@
               "destinationAddressPrefix" : "*",
               "access" : "Allow",
               "priority" : 2000,
+              "direction" : "Inbound"
+            }
+          },
+          {
+            "name" : "local-ssh",
+            "properties" : {
+              "protocol" : "Tcp",
+              "sourcePortRange" : "*",
+              "destinationPortRange" : "22",
+              "sourceAddressPrefix" : "[parameters('bastionPrivateIp')]",
+              "destinationAddressPrefix" : "*",
+              "access" : "Allow",
+              "priority" : 3000,
+              "direction" : "Inbound"
+            }
+          },
+          {
+            "name" : "non-local-ssh",
+            "properties" : {
+              "protocol" : "Tcp",
+              "sourcePortRange" : "*",
+              "destinationPortRange" : "22",
+              "sourceAddressPrefix" : "*",
+              "destinationAddressPrefix" : "*",
+              "access" : "Deny",
+              "priority" : 3001,
               "direction" : "Inbound"
             }
           }

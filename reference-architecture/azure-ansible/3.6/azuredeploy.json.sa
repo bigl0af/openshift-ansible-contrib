@@ -86,6 +86,12 @@
 				"description": "Internal IP address for web console"
 			}
 		},
+                "bastionPrivateIp": {
+                        "type": "string",
+                        "metadata": {
+				"description": "Internal IP address for bastion host"
+			}
+                },
 		"adminUsername": {
 			"type": "string",
 			"minLength": 1,
@@ -400,10 +406,10 @@
                 }
 	},
 	"variables": {
-		"gituser": "jhorn-redhat",
-		"branch": "master",
+		"gituser": "clasohm",
+		"branch": "clasohm-lab-nsg-ssh",
 		"version": "3.6",
-		"baseTemplateUrl": "https://openshiftrefarch.blob.core.windows.net/ocp-lab/",
+		"baseTemplateUrl": "[concat('https://raw.githubusercontent.com/',variables('gituser'),'/openshift-ansible-contrib/',variables('branch'),'/reference-architecture/azure-ansible/',variables('version'),'/')]",
 		"baseVMachineTemplateUriInfranode": "[concat(variables('baseTemplateUrl'), 'infranode.json')]",
 		"baseVMachineTemplateUriNode": "[concat(variables('baseTemplateUrl'), 'node.json')]",
 		"baseVMachineTemplateUriMaster": "[concat(variables('baseTemplateUrl'), 'master.json')]",
@@ -740,6 +746,9 @@
 					"subnetRef": {
 						"value": "[variables('masterSubnetRef')]"
 					},
+                                        "bastionPrivateIp": {
+                                                "value": "[parameters('bastionPrivateIp')]"
+                                        },
 					"vmSize": {
 						"value": "[variables('bastionVMSize')]"
 					},
@@ -886,6 +895,9 @@
 					"subnetRef": {
 						"value": "[variables('masterSubnetRef')]"
 					},
+                                        "bastionPrivateIp": {
+                                                "value": "[parameters('bastionPrivateIp')]"
+                                        },
 					"vmSize": {
 						"value": "[parameters('masterVMSize')]"
 					},
@@ -939,6 +951,9 @@
 					"subnetRef": {
 						"value": "[variables('masterSubnetRef')]"
 					},
+                                        "bastionPrivateIp": {
+                                                "value": "[parameters('bastionPrivateIp')]"
+                                        },
 					"vmSize": {
 						"value": "[parameters('masterVMSize')]"
 					},
@@ -992,6 +1007,9 @@
 					"subnetRef": {
 						"value": "[variables('masterSubnetRef')]"
 					},
+                                        "bastionPrivateIp": {
+                                                "value": "[parameters('bastionPrivateIp')]"
+                                        },
 					"vmSize": {
 						"value": "[parameters('masterVMSize')]"
 					},
@@ -1042,6 +1060,9 @@
 					"subnetRef": {
 						"value": "[variables('infranodeSubnetRef')]"
 					},
+                                        "bastionPrivateIp": {
+                                                "value": "[parameters('bastionPrivateIp')]"
+                                        },
 					"vmSize": {
 						"value": "[parameters('infranodeVMSize')]"
 					},
@@ -1092,6 +1113,9 @@
 					"subnetRef": {
 						"value": "[variables('infranodeSubnetRef')]"
 					},
+                                        "bastionPrivateIp": {
+                                                "value": "[parameters('bastionPrivateIp')]"
+                                        },
 					"vmSize": {
 						"value": "[parameters('infranodeVMSize')]"
 					},
@@ -1142,6 +1166,9 @@
 					"subnetRef": {
 						"value": "[variables('infranodeSubnetRef')]"
 					},
+                                        "bastionPrivateIp": {
+                                                "value": "[parameters('bastionPrivateIp')]"
+                                        },
 					"vmSize": {
 						"value": "[parameters('infranodeVMSize')]"
 					},

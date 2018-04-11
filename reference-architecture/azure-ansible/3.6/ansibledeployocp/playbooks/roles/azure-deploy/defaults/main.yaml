@@ -15,6 +15,7 @@ opslogging: false
 fqdn: "false"
 masterurl: "false"
 masterprivateip: "false"
+bastionprivateip: "false"
 routercertdata: "false"
 routerkeydata: "false"
 routercadata: "false"

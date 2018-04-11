@@ -13,6 +13,8 @@
         value: "{{ masterurl }}"
       masterPrivateIp:
         value: "{{ masterprivateip }}"
+      bastionPrivateIp:
+        value: "{{ bastionprivateip }}"
       adminUsername:
         value: "{{ adminusername }}"
       adminPassword:
