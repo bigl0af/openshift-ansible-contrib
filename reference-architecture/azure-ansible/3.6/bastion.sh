@@ -773,18 +773,14 @@ cat <<EOF >> /home/${AUSERNAME}/subscribe.yml
     delay: 30
     ignore_errors: yes
     when:  '"master" in inventory_hostname or "infra"  in inventory_hostname'
-EOF
-fi
 
-# Remove worker node subscription from masters/infra nodes
-cat <<EOF >> /home/${AUSERNAME}/subscribe.yml
-
+  # Remove worker node subscription from masters/infra nodes
   - name: remove pool id | Master and Infra subscription only
     shell: subscription-manager remove --pool "${RHNPOOLID}"
     ignore_errors: yes
     when:  '"master" in inventory_hostname or "infra"  in inventory_hostname'
-
 EOF
+fi
 
 cat <<EOF >> /home/${AUSERNAME}/subscribe.yml
 
@@ -799,7 +795,7 @@ cat <<EOF >> /home/${AUSERNAME}/subscribe.yml
       state: present
       username: "${RHNUSERNAME}"
       password: "${RHNPASSWORD}"
-      pool: "${RHNPOOLID_BROKER}"
+      pool: "${RHNPOOLID}"
       force_register: yes
     register: task_result
     until: task_result | success
