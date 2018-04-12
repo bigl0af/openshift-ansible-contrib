@@ -788,21 +788,30 @@ EOF
 
 cat <<EOF >> /home/${AUSERNAME}/subscribe.yml
 
+  - name: register hosts | node subscription only
 EOF
+
+# Register Worker Nodes
 if [[ $RHSMMODE == "usernamepassword" ]]
 then
-    echo "  - name: attach sub" >> /home/${AUSERNAME}/subscribe.yml
-    echo "    shell: subscription-manager attach --pool=$RHNPOOLID" >> /home/${AUSERNAME}/subscribe.yml
-    echo "    register: task_result" >> /home/${AUSERNAME}/subscribe.yml
-    echo "    until: task_result.rc == 0" >> /home/${AUSERNAME}/subscribe.yml
-    echo "    retries: 10" >> /home/${AUSERNAME}/subscribe.yml
-    echo "    delay: 30" >> /home/${AUSERNAME}/subscribe.yml
-    echo "    ignore_errors: yes" >> /home/${AUSERNAME}/subscribe.yml
-else
-# Register Worker Nodes
 cat <<EOF >> /home/${AUSERNAME}/subscribe.yml
-
-  - name: register hosts | node subscription only
+    redhat_subscription:
+      state: present
+      username: "${RHNUSERNAME}"
+      password: "${RHNPASSWORD}"
+      pool: "${RHNPOOLID_BROKER}"
+      force_register: yes
+    register: task_result
+    until: task_result | success
+    retries: 10
+    delay: 30
+    ignore_errors: yes
+    when:
+      - '"master" not in inventory_hostname'
+      - '"infra" not in inventory_hostname'
+EOF
+else
+cat <<EOF >> /home/${AUSERNAME}/subscribe.yml
     redhat_subscription:
       state: present
       activationkey: "${RHNUSERNAME}"
@@ -816,11 +825,11 @@ cat <<EOF >> /home/${AUSERNAME}/subscribe.yml
     when:
       - '"master" not in inventory_hostname'
       - '"infra" not in inventory_hostname'
-
 EOF
 fi
 
 cat <<EOF >> /home/${AUSERNAME}/subscribe.yml
+
   - name: disable all repos
     shell: subscription-manager repos --disable="*"
     register: repo_result
