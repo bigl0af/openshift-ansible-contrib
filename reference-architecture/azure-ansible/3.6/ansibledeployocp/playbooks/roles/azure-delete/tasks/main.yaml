@@ -93,10 +93,16 @@
       with_items:
         - "{{ pip_list.stdout_lines }}"
     
+    # Dissassociate the appnodensg from the node subnet. The subnet is
+    # not deleted, and we would not be able to delete the NSG if the
+    # association is not removed first.
+    - name: Remove NSG from node subnet
+      shell: az network vnet subnet update -g "{{ resourcegroupname }}" --vnet-name "{{ resourcegroupname }}" --name node --network-security-group ""
+
     - name: Destroy Azure | Gather list of Network Security Groups
       shell:  az network nsg list -g "{{ resourcegroupname }}"  --query "[].name" -o tsv
       register: nsg_list
-    
+
     - name: Destroy Azure | Delete Network Security Groups
       azure_rm_securitygroup:
         resource_group: "{{ resourcegroupname }}"
