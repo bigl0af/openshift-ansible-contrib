@@ -246,8 +246,8 @@ then
 else
    subscription-manager register --org="${RHNPASSWORD}" --activationkey="${RHNUSERNAME}"
 fi
-+subscription-manager remove --all
-+subscription-manager attach --pool=${RHNPOOLID_BROKER}
+subscription-manager remove --all
+subscription-manager attach --pool=${RHNPOOLID_BROKER}
 subscription-manager repos --disable="*"
 subscription-manager repos --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-fast-datapath-rpms"
 subscription-manager repos --enable="rhel-7-server-ose-3.7-rpms"
@@ -1836,7 +1836,7 @@ fi
 # Pass with openshift-ansible:v3.7.36.
 # logging_elasticsearch_rollout_override=True
   ansible-playbook -e "openshift_logging_install_logging=\${DEPLOYLOGGING} openshift_logging_use_ops=\${DEPLOYOPSLOGGING}" -e logging_elasticsearch_rollout_override=True /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/openshift-logging.yml
-+
+
 # Service catalog
 ansible-playbook -e openshift_enable_service_catalog=True -e template_service_broker_install=True /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/service-catalog.yml
 #fi
