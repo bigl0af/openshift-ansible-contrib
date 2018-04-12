@@ -1841,6 +1841,10 @@ fi
 ansible-playbook -e openshift_enable_service_catalog=True -e template_service_broker_install=True /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/service-catalog.yml
 #fi
 
+# Assign the application node network security group that was created by the
+# ARM template to the node subnet that already existed as part of the
+# pre-created VNet.
+azure network vnet subnet set ${RESOURCEGROUP} ${RESOURCEGROUP} node --network-security-group-name appnodensg
 EOF
 
 cat <<'EOF' > /home/${AUSERNAME}/create_pv.sh
