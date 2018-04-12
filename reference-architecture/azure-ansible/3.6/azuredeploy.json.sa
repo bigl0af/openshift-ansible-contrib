@@ -417,7 +417,7 @@
 		"location": "[resourceGroup().location]",
                 "osm_cluster_network_cidr": "10.29.0.0/16",
                 "openshift_portal_net": "10.28.0.0/16",
-                "virtualNetworkName": "lab-spec-westus-rg",
+                "virtualNetworkName": "ccltest1",
                 "addressPrefix": "10.8.145.96/27",
                 "infranodesubnetName": "infranode",
                 "infranodesubnetPrefix": "10.8.145.112/29",
