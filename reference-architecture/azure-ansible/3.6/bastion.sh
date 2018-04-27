@@ -483,7 +483,10 @@ cat > /home/${AUSERNAME}/setup-azure-node.yml <<EOF
     - node01
     - node02
     - node03
+EOF
 
+# TEST
+cat >/dev/null <<EOF
 - hosts: nodes
   become: yes
   tasks:
@@ -876,6 +879,7 @@ cat <<EOF >> /home/${AUSERNAME}/subscribe.yml
 
   - name: Install the docker
     yum: name=docker state=latest
+
   - name: Start Docker
     service:
       name: docker
@@ -884,31 +888,25 @@ cat <<EOF >> /home/${AUSERNAME}/subscribe.yml
     register: docker_status
     ignore_errors: yes
 
-  - name: Restart host
-    block:
-     - name: Reboot node
-       command: shutdown -r +1
-       async: 600
-       poll: 0
-       when: docker_status|failed
+  - name: Reboot node
+    command: shutdown -r +1
+    async: 600
+    poll: 0
 
-     - name: Wait for node to come back
-       local_action: wait_for
-       args:
-         host: "{{ ansible_nodename }}"
-         port: 22
-         state: started
-         # Wait for the reboot delay from the previous task plus 10 seconds.
-         # Otherwise, the SSH port would still be open because the system
-         # has not rebooted.
-         delay: 70
-         timeout: 600
-       register: wait_for_reboot
+  - name: Wait for node to come back
+    local_action: wait_for
+    args:
+      host: "{{ ansible_nodename }}"
+      port: 22
+      state: started
+      # Wait for the reboot delay from the previous task plus 10 seconds.
+      # Otherwise, the SSH port would still be open because the system
+      # has not rebooted.
+      delay: 70
+      timeout: 600
 
-     - name: Wait for Things to Settle
-       pause: minutes=2
-    when: docker_status|failed
-
+  - name: Wait for Things to Settle
+    pause: minutes=2
 EOF
 
 cat <<EOF >> /home/${AUSERNAME}/upgrade.yml
@@ -1761,6 +1759,9 @@ fi
 cat <<EOF >> /home/${AUSERNAME}/openshift-install.sh
 
 ansible-playbook  /home/${AUSERNAME}/setup-azure-node.yml
+
+# TEST
+exit 0
 
 ansible-playbook /home/${AUSERNAME}/postinstall.yml
 cd /root
