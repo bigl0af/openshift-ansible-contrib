@@ -419,9 +419,6 @@ cat > /home/${AUSERNAME}/setup-azure-node.yml <<EOF
     systemd:
       state: restarted
       name: atomic-openshift-node
-  - name: delete node
-    command: oc delete node {{ ansible_nodename }}
-    delegate_to: "{{ groups['masters'][0] }}"
   tasks:
   - name: insert the azure disk config into the node
     modify_yaml:
@@ -439,7 +436,6 @@ cat > /home/${AUSERNAME}/setup-azure-node.yml <<EOF
     register: node_config
     notify:
     - restart atomic-openshift-node
-    - delete node
 
 - hosts: nodes
   become: no
@@ -451,7 +447,7 @@ cat > /home/${AUSERNAME}/setup-azure-node.yml <<EOF
     register: node_ready
     until: node_ready.rc == 0
     retries: 12
-    delay: 5
+    delay: 10
 
 - hosts: masters
   become: no
