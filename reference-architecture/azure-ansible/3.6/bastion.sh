@@ -483,13 +483,54 @@ cat > /home/${AUSERNAME}/setup-azure-node.yml <<EOF
     - node01
     - node02
     - node03
-EOF
 
-# TEST
-cat >/dev/null <<EOF
 - hosts: nodes
   become: yes
   tasks:
+  - name: Deactivate openshift.local.volumes mount
+    lineinfile:
+      path: /etc/fstab
+      regexp: 'UUID=([^ ]+) +/var/lib/origin/openshift.local.volumes.*'
+      line: '#UUID=\1 /var/lib/origin/openshift.local.volumes xfs  defaults,gquota 1 2'
+      backrefs: yes
+      state: present
+      backup: yes
+    when: node_config.changed
+
+  # Run the reboot asynchronously and let the managed system wait
+  # for 1 minute before rebooting. If we reboot immediately, the 
+  # SSH connection breaks and the playbook run for this host 
+  # would be aborted.
+  - name: Reboot node
+    command: shutdown -r +1
+    async: 600
+    poll: 0
+    when: node_config.changed
+
+  - name: Wait for node to come back
+    local_action: wait_for
+    args:
+      host: "{{ ansible_nodename }}"
+      port: 22
+      state: started
+      # Wait for the reboot delay from the previous task plus 10 seconds.
+      # Otherwise, the SSH port would still be open because the system
+      # has not rebooted.
+      delay: 70 
+      timeout: 600
+    register: wait_for_reboot
+    when: node_config.changed
+
+  - name: Activate openshift.local.volumes mount
+    lineinfile:
+      path: /etc/fstab
+      regexp: 'UUID=([^ ]+) +/var/lib/origin/openshift.local.volumes.*'
+      line: 'UUID=\1 /var/lib/origin/openshift.local.volumes xfs  defaults,gquota 1 2'
+      backrefs: yes
+      state: present
+      backup: yes
+    when: node_config.changed
+
   # Run the reboot asynchronously and let the managed system wait
   # for 1 minute before rebooting. If we reboot immediately, the 
   # SSH connection breaks and the playbook run for this host 
@@ -1759,9 +1800,6 @@ fi
 cat <<EOF >> /home/${AUSERNAME}/openshift-install.sh
 
 ansible-playbook  /home/${AUSERNAME}/setup-azure-node.yml
-
-# TEST
-exit 0
 
 ansible-playbook /home/${AUSERNAME}/postinstall.yml
 cd /root
