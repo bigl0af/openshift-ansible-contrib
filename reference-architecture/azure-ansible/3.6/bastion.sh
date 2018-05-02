@@ -428,11 +428,7 @@ cat > /home/${AUSERNAME}/setup-azure-node.yml <<EOF
     - key: kubeletArguments.cloud-provider
       value:
       - azure
-    register: node_config
 
-- hosts: nodes
-  become: yes
-  tasks:
   - name: Deactivate openshift.local.volumes mount
     lineinfile:
       path: /etc/fstab
