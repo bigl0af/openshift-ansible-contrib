@@ -1,5 +1,5 @@
 ---
-templatelink: "https://raw.githubusercontent.com/jhorn-redhat/openshift-ansible-contrib/master/reference-architecture/azure-ansible/3.6/azuredeploy.json"
+#templatelink: "https://raw.githubusercontent.com/jhorn-redhat/openshift-ansible-contrib/master/reference-architecture/azure-ansible/3.6/azuredeploy.json"
 #template: "{{ playbook_dir }}/../../azuredeploy.json"
 templatelink: "https://openshiftrefarch.blob.core.windows.net/ocp-lab/azuredeploy.json"
 numberofnodes: 3

@@ -406,10 +406,10 @@
                 }
 	},
 	"variables": {
-		"gituser": "jhorn-redhat",
-		"branch": "master",
+		"gituser": "clasohm",
+		"branch": "clasohm-lab-3-7-44-test",
 		"version": "3.6",
-		"baseTemplateUrl": "https://openshiftrefarch.blob.core.windows.net/ocp-lab/",
+		"baseTemplateUrl": "[concat('https://raw.githubusercontent.com/',variables('gituser'),'/openshift-ansible-contrib/',variables('branch'),'/reference-architecture/azure-ansible/',variables('version'),'/')]",
 		"baseVMachineTemplateUriInfranode": "[concat(variables('baseTemplateUrl'), 'infranode.json')]",
 		"baseVMachineTemplateUriNode": "[concat(variables('baseTemplateUrl'), 'node.json')]",
 		"baseVMachineTemplateUriMaster": "[concat(variables('baseTemplateUrl'), 'master.json')]",
@@ -417,7 +417,7 @@
 		"location": "[resourceGroup().location]",
                 "osm_cluster_network_cidr": "10.29.0.0/16",
                 "openshift_portal_net": "10.28.0.0/16",
-                "virtualNetworkName": "lab-spec-westus-rg",
+                "virtualNetworkName": "ccltest1",
                 "addressPrefix": "10.8.145.96/27",
                 "infranodesubnetName": "infranode",
                 "infranodesubnetPrefix": "10.8.145.112/29",

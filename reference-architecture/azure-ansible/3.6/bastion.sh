@@ -561,7 +561,7 @@ new_masters
 # v3.7
 # fix for kb 3376031 bz1551862
 openshift_disable_check=package_version
-openshift_release=3.7
+openshift_release=3.7.44
 deployment_type=openshift-enterprise
 openshift_rolling_restart_mode=system
 openshift_deployment_type=openshift-enterprise
