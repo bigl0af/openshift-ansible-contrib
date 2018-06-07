@@ -561,7 +561,7 @@ new_masters
 # v3.7
 # fix for kb 3376031 bz1551862
 openshift_disable_check=package_version
-openshift_release=3.7.44
+openshift_release=3.7
 deployment_type=openshift-enterprise
 openshift_rolling_restart_mode=system
 openshift_deployment_type=openshift-enterprise
@@ -588,7 +588,7 @@ openshift_master_api_port="{{ console_port }}"
 openshift_master_console_port="{{ console_port }}"
 openshift_override_hostname_check=true
 osm_use_cockpit=false
-#openshift_pkg_version=-3.6.173.0.63
+openshift_pkg_version=-3.7.42
 openshift_cloudprovider_kind=azure
 openshift_node_local_quota_per_fsgroup=512Mi
 azure_resource_group=${RESOURCEGROUP}
