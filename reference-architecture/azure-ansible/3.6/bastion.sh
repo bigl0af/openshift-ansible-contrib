@@ -570,7 +570,7 @@ openshift_enable_service_catalog=false
 ansible_service_broker_install=false
 template_service_broker_install=false
 template_service_broker_selector={"role":"infra"}
-ansible_service_broker_node_selector='role=infra'
+ansible_service_broker_node_selector={"role":"infra"}
 
 osm_project_request_message=“To create a new project, contact your Team Admin.”
 
