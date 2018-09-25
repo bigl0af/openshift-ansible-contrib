@@ -1,0 +1,224 @@
+- name: Create temporary directory
+  hosts: localhost
+  tasks:
+    - name: Create temporary directory
+      tempfile:
+        state: directory
+      register: tempdir
+      changed_when: false
+
+# We need the self-signed CA later to combine it with the Let's Encrypt CA.
+- name: Get self-signed CA certificate
+  hosts: master1
+  tasks:
+    - name: Copy self-signed CA certificate
+      fetch:
+        src: /etc/origin/master/ca.crt
+        dest: "{{ hostvars['localhost']['tempdir'].path }}/"
+        flat: yes
+      changed_when: false
+
+- name: Get Let's Encrypt SSL certificates
+  hosts: localhost
+  vars:
+    certbot_namespace: certbot
+    certbot_email: openshift@example.com
+  tasks:
+    # We assume there's a single pod deployed, and that it's running.
+    - name: Get certbot pod name
+      command: oc get pods -n {{ certbot_namespace }} -l 'deploymentconfig==certbot-ocp' -o jsonpath='{.items[0].metadata.name}'
+      register: cmd
+      changed_when: false
+
+    - set_fact:
+        pod_name: "{{ cmd.stdout }}"
+
+    - name: Request Let's Encrypt certificate
+      command: oc exec -n {{ certbot_namespace }} {{ pod_name }} -- certbot certonly -m {{ certbot_email }} --agree-tos -n --dns-route53 -d '*.{{ domain }}' --preferred-challenges dns-01 --server https://acme-v02.api.letsencrypt.org/directory
+      register: certbot
+      changed_when: not certbot.stdout is search("no action taken")
+
+    - debug:
+        msg: "{{ certbot.stdout }}"
+
+    - name: Copy Let's Encrypt data
+      command: oc rsync -n {{ certbot_namespace }} {{ pod_name }}:/etc/letsencrypt/ {{ tempdir.path }}
+      changed_when: false
+
+    - name: Encode self-signed CA and Let's Encrypt CA
+      shell: cat {{ tempdir.path }}/ca.crt {{ tempdir.path }}/live/{{ domain }}/chain.pem | base64 -w 0
+      register: cmd
+      changed_when: false
+
+    - set_fact:
+        encoded_ca: "{{ cmd.stdout }}"
+
+    - name: Copy Let's Encrypt CA to system trust directory
+      copy:
+        src: "{{ tempdir.path }}/live/{{ domain }}/chain.pem"
+        dest: /etc/pki/ca-trust/source/anchors/letsencrypt-ca.pem
+      notify: Update system CA trust
+      become: yes
+
+    - name: Copy Let's Encrypt CA to deployment directory
+      copy:
+        src: "{{ tempdir.path }}/live/{{ domain }}/chain.pem"
+        dest: /home/{{ admin_user }}/certs/{{ item }}
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: 0640
+        backup: yes
+      become: yes
+      with_items:
+        - master.ca
+        - router.ca
+
+    - name: Copy Let's Encrypt key to deployment directory
+      copy:
+        src: "{{ tempdir.path }}/live/{{ domain }}/privkey.pem"
+        dest: /home/{{ admin_user }}/certs/{{ item }}
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: 0600
+        backup: yes
+      become: yes
+      with_items:
+        - master.key
+        - router.key
+     
+    - name: Copy Let's Encrypt certificate to deployment directory
+      copy:
+        src: "{{ tempdir.path }}/live/{{ domain }}/fullchain.pem"
+        dest: /home/{{ admin_user }}/certs/{{ item }}
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: 0600
+        backup: yes
+      become: yes
+      with_items:
+        - master.crt
+        - router.crt
+  handlers:
+    - name: Update system CA trust
+      command: update-ca-trust extract
+      become: yes
+
+- name: Deploy Let's Encrypt key and certificate
+  hosts: masters
+  vars:
+    tempdir: "{{ hostvars['localhost']['tempdir'] }}"
+  tasks:
+    # We first stop the console/API on all masters, update
+    # the certificate and then start the console/API on all
+    # masters to prevent a mix of two different certificates
+    # being served. Mixing certificates seems to cause some 
+    # firewalls to block incoming connection.
+    - name: Update master certificate
+      block:
+        - name: Stop master API
+          service:
+            name: atomic-openshift-master-api
+            state: stopped
+
+        - name: Stop master controllers
+          service:
+            name: atomic-openshift-master-controllers
+            state: stopped
+
+        - name: Copy Let's Encrypt master CA
+          copy:
+            src: "{{ tempdir.path }}/live/{{ domain }}/chain.pem"
+            dest: /etc/origin/master/named_certificates/master.ca
+            mode: 0644
+            backup: yes
+
+        - name: Copy Let's Encrypt router CA
+          copy:
+            src: "{{ tempdir.path }}/live/{{ domain }}/chain.pem"
+            dest: /etc/origin/master/router.ca
+            mode: 0644
+            backup: yes
+
+        - name: Copy Let's Encrypt master key
+          copy:
+            src: "{{ tempdir.path }}/live/{{ domain }}/privkey.pem"
+            dest: /etc/origin/master/named_certificates/master.key
+            mode: 0600
+            backup: yes
+
+        - name: Copy Let's Encrypt router key
+          copy:
+            src: "{{ tempdir.path }}/live/{{ domain }}/privkey.pem"
+            dest: /etc/origin/master/router.key
+            mode: 0600
+            backup: yes
+
+        - name: Copy Let's Encrypt master certificate
+          copy:
+            src: "{{ tempdir.path }}/live/{{ domain }}/fullchain.pem"
+            dest: /etc/origin/master/named_certificates/master.crt
+            mode: 0644
+            backup: yes
+
+        - name: Copy Let's Encrypt router certificate
+          copy:
+            src: "{{ tempdir.path }}/live/{{ domain }}/fullchain.pem"
+            dest: /etc/origin/master/router.crt
+            mode: 0644
+            backup: yes
+
+        - name: Start master API
+          service:
+            name: atomic-openshift-master-api
+            state: started
+
+        - name: Start master controllers
+          service:
+            name: atomic-openshift-master-controllers
+            state: started
+      when: hostvars['localhost']['certbot'].changed
+
+- name: Finalize certificate update
+  hosts: localhost
+  tasks:
+    - name: Update router certificate
+      block:
+        - set_fact:
+            encoded_key: "{{ lookup('file', tempdir.path + '/live/' + domain + '/privkey.pem') | b64encode }}"
+
+        # The router pod is configured to expect the private key and the certificate in the tls.crt field.
+        - name: Encode certificate and key
+          shell: cat {{ tempdir.path }}/live/{{ domain }}/fullchain.pem {{ tempdir.path }}/live/{{ domain }}/privkey.pem | base64 -w 0
+          register: cmd
+
+        - name: Update router-certs secret
+          command: oc patch -n default secret router-certs -p '{"data":{"tls.crt":"{{ cmd.stdout }}","tls.key":"{{ encoded_key }}"} }'
+
+        - name: Redeploy routers
+          command: oc rollout latest -n default router
+      when: certbot.changed
+
+    - name: Delete temporary directory
+      file:
+        path: "{{ tempdir.path }}"
+        state: absent
+      changed_when: false
+
+# Because we use an internal Azure load balancer, and the masters are configured
+# to connect to themselves and not to the load balancer, and the masters themselves
+# use a self-signed certificate, we cannot reconfigure the kubeconfig CA on the masters.
+- name: Deploy Let's Encrypt CA
+  hosts: nodes:!masters
+  tasks:
+    - name: Configure Let's Encrypt CA for node
+      lineinfile:
+        path: /etc/origin/node/system:node:{{ ansible_hostname }}.kubeconfig
+        regexp: "^    certificate-authority-data:"
+        line: "    certificate-authority-data: {{ hostvars['localhost']['encoded_ca'] }}"
+        backup: yes
+      notify: Restart atomic-openshift-node
+  handlers:
+    - name: Restart atomic-openshift-node
+      service:
+        name: atomic-openshift-node
+        state: restarted

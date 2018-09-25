@@ -1,0 +1,147 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: certbot-ocp
+parameters:
+- name: NAMESPACE
+  displayName: Namespace
+  description: This is the namespace being deployed to.
+  required: true
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      app: certbot-ocp
+    name: certbot-ocp
+  spec:
+    lookupPolicy:
+      local: false
+
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: letsencrypt-etc
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: aws-credentials
+  type: Opaque
+  data:
+    AWS_ACCESS_KEY_ID: CHANGEME
+    AWS_SECRET_ACCESS_KEY: CHANGEME
+
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: aws-configuration
+  data:
+    AWS_DOMAIN_REPLACE:
+
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      app: certbot-ocp
+    name: certbot-ocp
+  spec:
+    failedBuildsHistoryLimit: 5
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: certbot-ocp:latest
+    postCommit: {}
+    resources: {}
+    runPolicy: Serial
+    source:
+      contextDir: reference-architecture/day2ops/certbot/src
+      git:
+        ref: clasohm-certbot-ocp
+        uri: https://github.com/clasohm/openshift-ansible-contrib.git
+      type: Git
+    strategy:
+      type: Docker
+    successfulBuildsHistoryLimit: 5
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: certbot-ocp
+    name: certbot-ocp
+  spec:
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      app: certbot-ocp
+      deploymentconfig: certbot-ocp
+    strategy:
+      activeDeadlineSeconds: 21600
+      recreateParams:
+        timeoutSeconds: 600
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        labels:
+          app: certbot-ocp
+          deploymentconfig: certbot-ocp
+      spec:
+        containers:
+        - envFrom:
+          - secretRef:
+              name: aws-credentials
+          - configMapRef:
+              name: aws-configuration
+          image: docker-registry.default.svc:5000/${NAMESPACE}/certbot-ocp
+          imagePullPolicy: Always
+          name: certbot-ocp
+          ports:
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /etc/letsencrypt
+            name: letsencrypt-etc
+          - mountPath: /var/lib/letsencrypt
+            name: letsencrypt-lib
+          - mountPath: /var/log/letsencrypt
+            name: letsencrypt-log
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: letsencrypt-etc
+          persistentVolumeClaim:
+            claimName: letsencrypt-etc
+        - name: letsencrypt-lib
+          emptyDir: {}
+        - name: letsencrypt-log
+          emptyDir: {}
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - certbot-ocp
+        from:
+          kind: ImageStreamTag
+          name: certbot-ocp:latest
+          namespace: "${NAMESPACE}"
+      type: ImageChange
